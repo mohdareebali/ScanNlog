@@ -18,24 +18,30 @@ class _UploadScreenState extends State<UploadScreen> {
       if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('File picking not supported on this platform')),
+            content: Text('File picking not supported on this platform'),
+          ),
         );
         return;
       }
+
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf'],
-        allowMultiple: false,
+        allowMultiple: true,
       );
 
       if (result != null && result.files.isNotEmpty) {
         setState(() {
-          uploadedFiles.add(result.files.single.name);
+          for (var file in result.files) {
+            if (!uploadedFiles.contains(file.name)) {
+              uploadedFiles.add(file.name);
+            }
+          }
         });
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking file: $e')),
+        SnackBar(content: Text('Error picking files: $e')),
       );
     }
   }
@@ -49,7 +55,6 @@ class _UploadScreenState extends State<UploadScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Same as above, no changes to the build method
     return Scaffold(
       backgroundColor: const Color(0xFFFAFBFF),
       appBar: AppBar(
