@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'form_selector_page.dart';
 
 class UploadScreen extends StatefulWidget {
@@ -11,11 +13,31 @@ class UploadScreen extends StatefulWidget {
 class _UploadScreenState extends State<UploadScreen> {
   List<String> uploadedFiles = [];
 
-  Future<void> simulateFileUpload() async {
-    // Simulate adding a file (you can replace this with real picker later)
-    setState(() {
-      uploadedFiles.add("sample_document.pdf");
-    });
+  Future<void> pickFile() async {
+    try {
+      if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('File picking not supported on this platform')),
+        );
+        return;
+      }
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+        allowMultiple: false,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        setState(() {
+          uploadedFiles.add(result.files.single.name);
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking file: $e')),
+      );
+    }
   }
 
   void goToFormSelector() {
@@ -27,6 +49,7 @@ class _UploadScreenState extends State<UploadScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Same as above, no changes to the build method
     return Scaffold(
       backgroundColor: const Color(0xFFFAFBFF),
       appBar: AppBar(
@@ -80,7 +103,7 @@ class _UploadScreenState extends State<UploadScreen> {
           FloatingActionButton(
             heroTag: 'uploadBtn',
             backgroundColor: Colors.blue,
-            onPressed: simulateFileUpload,
+            onPressed: pickFile,
             child: const Icon(Icons.add),
           ),
           const SizedBox(height: 20),
