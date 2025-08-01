@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'form1_setup_page.dart'; // Add this import
+import 'form1_setup_page.dart';
+import 'form2_setup_page.dart';
+import 'form3_setup_page.dart'; // ✅ Add this import
 
 class FormSelectorPage extends StatelessWidget {
   const FormSelectorPage({super.key});
@@ -40,9 +42,9 @@ class FormSelectorPage extends StatelessWidget {
                 children: [
                   _formButton(context, 'Form 1', const Form1SetupPage()),
                   const SizedBox(height: 12),
-                  _formButton(context, 'Form 2', null),
+                  _formButton(context, 'Form 2', Form2SetupPage()),
                   const SizedBox(height: 12),
-                  _formButton(context, 'Form 3', null),
+                  _formButton(context, 'Form 3', Form3SetupPage()), // ✅ Activate Form 3
                 ],
               ),
             ),
@@ -57,7 +59,7 @@ class FormSelectorPage extends StatelessWidget {
       width: 200,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF1A3D6D),
+          backgroundColor: page != null ? const Color(0xFF1A3D6D) : Colors.grey.shade400,
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
