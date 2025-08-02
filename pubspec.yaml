@@ -13,6 +13,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   path: ^1.9.0
   file_picker: ^10.2.0
+  image_picker: ^1.0.4  # ✅ Add this line
 
 dev_dependencies:
   flutter_test:

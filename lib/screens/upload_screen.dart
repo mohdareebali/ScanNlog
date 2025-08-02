@@ -16,6 +16,7 @@ class _UploadScreenState extends State<UploadScreen> {
   Future<void> pickFile() async {
     try {
       if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('File picking not supported on this platform'),
@@ -30,6 +31,8 @@ class _UploadScreenState extends State<UploadScreen> {
         allowMultiple: true,
       );
 
+      if (!mounted) return;
+
       if (result != null && result.files.isNotEmpty) {
         setState(() {
           for (var file in result.files) {
@@ -40,6 +43,7 @@ class _UploadScreenState extends State<UploadScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error picking files: $e')),
       );
@@ -91,8 +95,7 @@ class _UploadScreenState extends State<UploadScreen> {
                   Expanded(
                     child: Text(
                       file,
-                      style: const TextStyle(
-                          fontSize: 16, color: Colors.black87),
+                      style: const TextStyle(fontSize: 16, color: Colors.black87),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -116,8 +119,7 @@ class _UploadScreenState extends State<UploadScreen> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
-                padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

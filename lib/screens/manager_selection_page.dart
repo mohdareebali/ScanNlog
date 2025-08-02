@@ -1,158 +1,206 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'manager_dashboard.dart';
 
 class ManagerSelectionPage extends StatefulWidget {
-  const ManagerSelectionPage({super.key});
+  const ManagerSelectionPage({super.key}); // ✅ Super parameter used
 
   @override
   State<ManagerSelectionPage> createState() => _ManagerSelectionPageState();
 }
 
 class _ManagerSelectionPageState extends State<ManagerSelectionPage> {
-  List<Map<String, String>> meEngineers = [{'email': '', 'password': ''}];
-  List<Map<String, String>> qcEngineers = [{'email': '', 'password': ''}];
+  List<Map<String, String>> meList = [{'email': '', 'password': ''}];
+  List<Map<String, String>> qcList = [{'email': '', 'password': ''}];
 
-  void generatePassword(List<Map<String, String>> list, int index, bool isME) {
-    final password = getRandomPassword();
-    setState(() {
-      if (isME) {
-        meEngineers[index]['password'] = password;
-      } else {
-        qcEngineers[index]['password'] = password;
-      }
-    });
-  }
-
-  String getRandomPassword() {
-    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  String generatePassword() {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     final rand = Random();
-    return List.generate(8, (_) => chars[rand.nextInt(chars.length)]).join();
+    return List.generate(10, (_) => chars[rand.nextInt(chars.length)]).join();
   }
 
-  void addEngineer(bool isME) {
+  void handleGeneratePassword(String listType, int index) {
+    final list = listType == 'me' ? meList : qcList;
+    final email = list[index]['email'] ?? '';
+    final password = list[index]['password'] ?? '';
+
+    if (email.isEmpty || !email.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid email before generating password')),
+      );
+      return;
+    }
+
+    if (password.isNotEmpty) return;
+
     setState(() {
-      if (isME) {
-        meEngineers.add({'email': '', 'password': ''});
+      list[index]['password'] = generatePassword();
+    });
+  }
+
+  void handleSharePassword(String? email, String? password) {
+    if (email == null || email.isEmpty || password == null || password.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Missing Info'),
+          content: const Text('Please enter email and generate password first.'),
+          actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+        ),
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Password Shared'),
+          content: Text('Password sent to $email:\n$password'),
+          actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+        ),
+      );
+    }
+  }
+
+  void handleAddEngineer(String listType) {
+    setState(() {
+      final newEntry = {'email': '', 'password': ''};
+      if (listType == 'me') {
+        meList.add(newEntry);
       } else {
-        qcEngineers.add({'email': '', 'password': ''});
+        qcList.add(newEntry);
       }
     });
   }
 
-  void updateEmail(bool isME, int index, String email) {
+  void handleInputChange(String listType, int index, String text) {
     setState(() {
-      if (isME) {
-        meEngineers[index]['email'] = email;
+      final updatedEntry = {'email': text, 'password': ''};
+      if (listType == 'me') {
+        meList[index] = updatedEntry;
       } else {
-        qcEngineers[index]['email'] = email;
+        qcList[index] = updatedEntry;
       }
     });
   }
 
-  Widget engineerField(bool isME, List<Map<String, String>> engineers) {
+  Widget buildEngineerList(String label, List<Map<String, String>> list, String type) {
     return Column(
-      children: List.generate(engineers.length, (index) {
-        final engineer = engineers[index];
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  decoration: const InputDecoration(
-                    hintText: 'Email',
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black87),
+        ),
+        const SizedBox(height: 10),
+        ...list.asMap().entries.map((entry) {
+          int index = entry.key;
+          var item = entry.value;
+          bool emailEntered = item['email'] != null && item['email']!.contains('@');
+          bool passwordGenerated = item['password'] != null && item['password']!.isNotEmpty;
+
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: '$label email',
                     filled: true,
-                    fillColor: Color(0xFFF0F4F8),
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: const BorderSide(color: Colors.grey),
                     ),
                   ),
-                  onChanged: (val) => updateEmail(isME, index, val),
+                  onChanged: (text) => handleInputChange(type, index, text),
                 ),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                onPressed: () => generatePassword(engineers, index, isME),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.all(12),
-                  backgroundColor: const Color(0xFF1C3A63),
+                const SizedBox(height: 8),
+                ElevatedButton.icon(
+                  onPressed: (emailEntered && !passwordGenerated)
+                      ? () => handleGeneratePassword(type, index)
+                      : null,
+                  icon: const Icon(Icons.lock),
+                  label: const Text('Generate Password'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1c3a63),
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.grey.shade300,
+                    disabledForegroundColor: Colors.grey.shade700,
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  ),
                 ),
-                child: const Text('🔐'),
-              ),
-              const SizedBox(width: 6),
-              ElevatedButton(
-                onPressed: () {
-                  final email = engineer['email'] ?? '';
-                  final password = engineer['password'] ?? '';
-                  if (email.isEmpty || password.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Enter email and generate password')),
-                    );
-                  } else {
-                    // Implement sharing logic or clipboard copy if needed
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.all(12),
-                  backgroundColor: const Color(0xFF1C3A63),
-                ),
-                child: const Text('📤'),
-              ),
-            ],
-          ),
-        );
-      }),
+                if (passwordGenerated)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        item['password']!,
+                        style: const TextStyle(color: Color(0xFF1c3a63), fontWeight: FontWeight.w500),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.share, color: Color(0xFF1c3a63), size: 20),
+                        onPressed: () => handleSharePassword(item['email'], item['password']),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          );
+        }),
+        TextButton.icon(
+          onPressed: () => handleAddEngineer(type),
+          icon: const Icon(Icons.add_circle_outline, size: 24, color: Color(0xFF1c3a63)),
+          label: const Text('Add Another', style: TextStyle(color: Color(0xFF1c3a63))),
+        ),
+        const SizedBox(height: 20),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Assign Engineers')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            const Text(
-              'Assign Engineers',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1C3A63),
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Add ME-Engineers and QC-Engineers',
-              style: TextStyle(fontSize: 16, color: Colors.black54),
-            ),
-            const SizedBox(height: 20),
-            Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('ME-Engineers', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                    engineerField(true, meEngineers),
-                    TextButton(
-                      onPressed: () => addEngineer(true),
-                      child: const Text('+ Add ME-Engineer'),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text('QC-Engineers', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                    engineerField(false, qcEngineers),
-                    TextButton(
-                      onPressed: () => addEngineer(false),
-                      child: const Text('+ Add QC-Engineer'),
-                    ),
-                  ],
+      backgroundColor: const Color(0xFFF4F6F9),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20).copyWith(top: 30),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Assign Engineers',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1c3a63),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 30),
+              buildEngineerList('ME Engineers', meList, 'me'),
+              buildEngineerList('QC Engineers', qcList, 'qc'),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ManagerDashboard()),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1c3a63),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: const Text(
+                  'Continue to Dashboard',
+                  style: TextStyle(fontSize: 16, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -79,12 +79,25 @@ class _Form1SetupPageState extends State<Form1SetupPage> {
   }
 
   Widget buildDualRow(String label1, String key1, String label2, String key2) {
-    return Row(
-      children: [
-        Expanded(child: buildField(label1, key1)),
-        const SizedBox(width: 16),
-        Expanded(child: buildField(label2, key2)),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 600) {
+          return Row(
+            children: [
+              Expanded(child: buildField(label1, key1)),
+              const SizedBox(width: 16),
+              Expanded(child: buildField(label2, key2)),
+            ],
+          );
+        } else {
+          return Column(
+            children: [
+              buildField(label1, key1),
+              buildField(label2, key2),
+            ],
+          );
+        }
+      },
     );
   }
 
@@ -127,7 +140,7 @@ class _Form1SetupPageState extends State<Form1SetupPage> {
     if (_formKey.currentState!.validate()) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => Form2SetupPage()),
+        MaterialPageRoute(builder: (_) => const Form2SetupPage()),
       );
     }
   }
@@ -136,128 +149,114 @@ class _Form1SetupPageState extends State<Form1SetupPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xFF0B3558), // Match Form 2 & 3 AppBar color
         title: const Text('Form 1: Part Number Accountability'),
-
-      ),
-
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              buildDualRow('1. Part Number', 'partNumber', '2. Part Name', 'partName'),
-              buildDualRow('3. Serial Number', 'serialNumber', '4. FAIR Identifier', 'fairId'),
-              buildDualRow('5. Part Revision Level', 'partRevision', '6. Drawing Number', 'drawingNumber'),
-              buildDualRow('7. Drawing Revision Level', 'drawingRevision', '8. Additional Changes', 'additionalChanges'),
-              buildField('9. Manufacturing Process Reference', 'processReference'),
-              buildField('10. Organization Name', 'organization'),
-              buildDualRow('11. Supplier Code', 'supplierCode', '12. Purchase Order Number', 'poNumber'),
-
-              buildRadioGroup(
-                title: '13. Detail / Assembly',
-                options: const ['detail', 'assembly'],
-                groupValue: detailType,
-                onChanged: (val) => setState(() => detailType = val),
-              ),
-
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  const Text('14. Full/Partial FAI:', style: TextStyle(fontWeight: FontWeight.w500)),
-                  const SizedBox(width: 10),
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: fullFAI,
-                        onChanged: (val) => setState(() => fullFAI = val!),
-                      ),
-                      const Text('Full FAI'),
-                    ],
-                  ),
-                  const SizedBox(width: 10),
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: partialFAI,
-                        onChanged: (val) => setState(() => partialFAI = val!),
-                      ),
-                      const Text('Partial FAI'),
-                    ],
-                  ),
-                ],
-              ),
-
-              buildField('Baseline Part Number (Including Revision Level)', 'baselinePart'),
-              buildField('Reason for Full/Partial FAI', 'reasonFAI'),
-              buildCheckbox('AOG', aog, (val) => setState(() => aog = val!)),
-              buildCheckbox('FAA Approved', faaApproved, (val) => setState(() => faaApproved = val!)),
-
-              const SizedBox(height: 16),
-              const Text('INDEX of part numbers or sub-assembly numbers required to make the assembly noted above',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
-              buildDualRow('15. Part Number', 'part15', '16. Part Name', 'part16Name'),
-              buildField('17. Part Type', 'part17Type'),
-              buildField('Supplier', 'supplier'),
-              buildField('18. FAIR Identifier', 'fair18'),
-
-              const SizedBox(height: 20),
-              const Text('FAIR and Program Information', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
-              buildField('FAIR #', 'fairNumber'),
-              buildField('FAIR Status', 'fairStatus'),
-              buildField('Program', 'program'),
-              buildField('Customer', 'customer'),
-              buildField('Division Info', 'division'),
-
-              buildRadioGroup(
-                title: '19. Does FAIR Contain a Documented Nonconformance?',
-                options: const ['Yes', 'No'],
-                groupValue: nonConformance == null
-                    ? ''
-                    : (nonConformance! ? 'Yes' : 'No'),
-                onChanged: (val) => setState(() => nonConformance = val == 'Yes'),
-              ),
-
-              const SizedBox(height: 16),
-              const Text('FAIR Verification and Approval', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
-              buildDualRow('20. FAIR Verified By', 'fairVerifiedBy', '21. Date', 'fairVerifiedDate'),
-              buildDualRow('22. FAIR Reviewed/Approved By', 'fairApprovedBy', '23. Date', 'fairApprovedDate'),
-              buildDualRow('24. Customer Approval', 'customerApproval', '25. Date', 'customerApprovalDate'),
-              buildField('26. Comments', 'comments'),
-
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Form saved locally!')),
-                        );
-                      },
-                      icon: const Icon(Icons.save),
-                      label: const Text('Save & Proceed'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        backgroundColor: Theme.of(context).primaryColor,
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  ElevatedButton(
-                    onPressed: _submitForm,
-                    child: const Text('Next → Form 2'),
-                  ),
-                ],
-              ),
-            ],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.download),
+            tooltip: 'Download Form',
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Download triggered!')),
+              );
+            },
           ),
+        ],
+      ),
+      body: SafeArea(
+        child: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16).copyWith(bottom: 100),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  buildDualRow('1. Part Number', 'partNumber', '2. Part Name', 'partName'),
+                  buildDualRow('3. Serial Number', 'serialNumber', '4. FAIR Identifier', 'fairId'),
+                  buildDualRow('5. Part Revision Level', 'partRevision', '6. Drawing Number', 'drawingNumber'),
+                  buildDualRow('7. Drawing Revision Level', 'drawingRevision', '8. Additional Changes', 'additionalChanges'),
+                  buildField('9. Manufacturing Process Reference', 'processReference'),
+                  buildField('10. Organization Name', 'organization'),
+                  buildDualRow('11. Supplier Code', 'supplierCode', '12. Purchase Order Number', 'poNumber'),
+                  buildRadioGroup(
+                    title: '13. Detail / Assembly',
+                    options: const ['detail', 'assembly'],
+                    groupValue: detailType,
+                    onChanged: (val) => setState(() => detailType = val),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      const Text('14. Full/Partial FAI:', style: TextStyle(fontWeight: FontWeight.w500)),
+                      buildCheckbox('Full FAI', fullFAI, (val) => setState(() => fullFAI = val!)),
+                      buildCheckbox('Partial FAI', partialFAI, (val) => setState(() => partialFAI = val!)),
+                    ],
+                  ),
+                  buildField('Baseline Part Number (Including Revision Level)', 'baselinePart'),
+                  buildField('Reason for Full/Partial FAI', 'reasonFAI'),
+                  buildCheckbox('AOG', aog, (val) => setState(() => aog = val!)),
+                  buildCheckbox('FAA Approved', faaApproved, (val) => setState(() => faaApproved = val!)),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'INDEX of part numbers or sub-assembly numbers required to make the assembly noted above',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  buildDualRow('15. Part Number', 'part15', '16. Part Name', 'part16Name'),
+                  buildField('17. Part Type', 'part17Type'),
+                  buildField('Supplier', 'supplier'),
+                  buildField('18. FAIR Identifier', 'fair18'),
+                  const SizedBox(height: 20),
+                  const Text('FAIR and Program Information', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  buildField('FAIR #', 'fairNumber'),
+                  buildField('FAIR Status', 'fairStatus'),
+                  buildField('Program', 'program'),
+                  buildField('Customer', 'customer'),
+                  buildField('Division Info', 'division'),
+                  buildRadioGroup(
+                    title: '19. Does FAIR Contain a Documented Nonconformance?',
+                    options: const ['Yes', 'No'],
+                    groupValue: nonConformance == null ? '' : (nonConformance! ? 'Yes' : 'No'),
+                    onChanged: (val) => setState(() => nonConformance = val == 'Yes'),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('FAIR Verification and Approval', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  buildDualRow('20. FAIR Verified By', 'fairVerifiedBy', '21. Date', 'fairVerifiedDate'),
+                  buildDualRow('22. FAIR Reviewed/Approved By', 'fairApprovedBy', '23. Date', 'fairApprovedDate'),
+                  buildDualRow('24. Customer Approval', 'customerApproval', '25. Date', 'customerApprovalDate'),
+                  buildField('26. Comments', 'comments'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            ElevatedButton.icon(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Form saved locally!')),
+                );
+              },
+              icon: const Icon(Icons.save),
+              label: const Text('Save & Proceed'),
+            ),
+            ElevatedButton(
+              onPressed: _submitForm,
+              child: const Text('Next → Form 2'),
+            ),
+          ],
         ),
       ),
     );
